@@ -6,6 +6,17 @@ const port = process.env.PORT || 5000;
 
 const app = express();
 
+//Must remove "/" from your production URL
+app.use(
+    cors({
+        origin: [
+            "http://localhost:3000",
+            "https://unity-uplift-client.vercel.app"
+        ],
+        credentials: true,
+    })
+);
+
 //middleware
 app.use(cors());
 app.use(express.json());
