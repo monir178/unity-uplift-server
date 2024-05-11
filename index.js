@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const port = process.env.PORT || 5000;
 
@@ -74,11 +74,11 @@ async function run() {
             try {
                 const query = {};
                 const cursor = reliefCollection.find(query);
-                const limitedReliefGoods = await cursor.limit(3).toArray();
+                const limitedReliefGoods = await cursor.limit(6).toArray();
 
                 res.send({
                     success: true,
-                    message: "Successfully got the data",
+                    message: "Successfully got the 6 data",
                     data: limitedReliefGoods,
                 });
             }
@@ -91,8 +91,8 @@ async function run() {
             }
         })
 
-        //for adding a relief
-        app.post('/relief-goods', async (req, res) => {
+        //for adding a Supply
+        app.post('/dashboard/create-supply', async (req, res) => {
             try {
                 const result = await reliefCollection.insertOne(req.body);
                 // console.log("result from 33", result);
@@ -117,6 +117,64 @@ async function run() {
                 });
             }
         });
+
+        // update a supply
+        app.patch('/dashboard/supply/:id', async (req, res) => {
+            const id = req.params.id;
+            try {
+                const { _id, ...updatedFields } = req.body;
+                const result = await reliefCollection.updateOne(
+                    { _id: new ObjectId(id) },
+                    { $set: updatedFields }
+                );
+                if (result.matchedCount) {
+                    res.status(200).json({
+                        success: true,
+                        message: "Supply updated successfully",
+                    });
+                } else {
+                    res.status(404).json({
+                        success: false,
+                        error: "Supply not found or couldn't be updated",
+                    });
+                }
+            } catch (error) {
+                console.error("Error updating service:", error);
+                res.status(500).json({
+                    success: false,
+                    error: "Internal server error",
+                });
+            }
+        });
+
+        //delete a supply
+        app.delete('/dashboard/supply/:id', async (req, res) => {
+            const id = req.params.id;
+            try {
+                const result = await reliefCollection.deleteOne({
+                    _id: new ObjectId(id)
+                });
+                if (result.deletedCount) {
+                    res.send({
+                        success: true,
+                        message: 'Supply deleted successfully.'
+                    });
+                }
+                else {
+                    res.send({
+                        success: false,
+                        error: "Couldn't delete the service",
+                    });
+                }
+            }
+            catch (error) {
+                console.error(error.name, error.message);
+                res.send({
+                    success: false,
+                    error: error.message,
+                });
+            }
+        })
 
     } finally {
         console.log("Operation is done.")
